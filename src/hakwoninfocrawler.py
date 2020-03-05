@@ -1,32 +1,11 @@
-from urllib.request import Request, urlopen
 from urllib.parse import urlencode
-from bs4 import BeautifulSoup
-import csv, datetime, shutil, os, boto3, re
-from botocore.exceptions import ClientError
 from openpyxl import Workbook
+import datetime
 import json
 import requests
 
 now = datetime.datetime.now()
 areaUrls = [
-    # 'https://hakwon.sen.go.kr/scs_ica_cr91_005.ws', # 서울
-    # 'https://hakwon.pen.go.kr/scs_ica_cr91_005.ws', # 부산
-    # 'https://hakwon.dge.go.kr/scs_ica_cr91_005.ws', # 대구
-    # 'https://hakwon.ice.go.kr/scs_ica_cr91_005.ws', # 인천
-    # 'https://hakwon.gen.go.kr/scs_ica_cr91_005.ws', # 광주
-    # 'https://hakwon.dje.go.kr/scs_ica_cr91_005.ws', # 대전
-    # 'https://hakwon.use.go.kr/scs_ica_cr91_005.ws', # 울산
-    # 'https://hakwon.sje.go.kr/scs_ica_cr91_005.ws', # 세종시
-    # 'https://hakwon.goe.go.kr/scs_ica_cr91_005.ws', # 경기도
-    # 'https://hakwon.kwe.go.kr/scs_ica_cr91_005.ws', # 강원도
-    # 'https://hakwon.cbe.go.kr/scs_ica_cr91_005.ws', # 충북
-    # 'https://hakwon.cne.go.kr/scs_ica_cr91_005.ws', # 충남
-    # 'https://hakwon.jbe.go.kr/scs_ica_cr91_005.ws', # 전북
-    # 'https://hakwon.jne.go.kr/scs_ica_cr91_005.ws', # 전남
-    # 'https://hakwon.gbe.go.kr/scs_ica_cr91_005.ws', # 경북
-    # 'https://hakwon.gne.go.kr/scs_ica_cr91_005.ws', # 경남
-    # 'https://hakwon.jje.go.kr/scs_ica_cr91_005.ws', # 제주
-
     {'url': 'https://hakwon.sen.go.kr', 'areaNm': '서울'},
     {'url': 'https://hakwon.pen.go.kr', 'areaNm': '부산'},
     {'url': 'https://hakwon.dge.go.kr', 'areaNm': '대구'},
@@ -47,34 +26,20 @@ areaUrls = [
 ]
 
 zoneCodes = []
+searchParams = {}
 
 def hakwondata(zcode, neisUrl, areaNm, cookies):
     book = Workbook()
     urllist = []
     excelList = []
     teacherList = []
-    params = {}
     totalPage = 1
     zoneNm = ""
 
-    params["pageIndex"] = "1"
-    params["pageSize"] = "1"
-    params["checkDomainCode"] = ""
-    params["juOfcdcCode"] = ""
-    params["acaAsnum"] = ""
-    params["gubunCode"] = ""
-    params["searchYn"] = "1"
-    params["searchGubunCode"] = "1"
-    params["searchName"] = ""
-    params["searchZoneCode"] = zcode
-    params["searchKindCode"] = ""
-    params["searchTypeCode"] = ""
-    params["searchCrseCode"] = ""
-    params["searchCourseCode"] = ""
-    params["searchClassName"] = ""
+    searchParams["searchZoneCode"] = zcode
 
     ## to get total count
-    response = requests.post(neisUrl + '/scs_ica_cr91_005.ws', data=json.dumps(params), cookies=cookies)
+    response = requests.post(neisUrl + '/scs_ica_cr91_005.ws', data=json.dumps(searchParams), cookies=cookies)
     jsonObj = json.loads(response.content)
 
     ## total count
@@ -85,10 +50,10 @@ def hakwondata(zcode, neisUrl, areaNm, cookies):
         totalPage, therest = divmod(totalCnt, 1000)
         if therest > 0:
             totalPage = totalPage + 1
-        params["pageSize"] = 1000
+        searchParams["pageSize"] = 1000
     else:
         totalPage = 1
-        params["pageSize"] = str(totalCnt)
+        searchParams["pageSize"] = str(totalCnt)
 
     print("Total ", totalPage, " pages...")
 
@@ -97,12 +62,12 @@ def hakwondata(zcode, neisUrl, areaNm, cookies):
     for pageIndex in range(0, totalPage, 1):
         print(pageIndex + 1, " page crawling... ")
         ## post again
-        params["pageIndex"] = str(pageIndex + 1)
-        response = requests.post(neisUrl + '/scs_ica_cr91_005.ws', data=json.dumps(params), cookies=cookies)
+        searchParams["pageIndex"] = str(pageIndex + 1)
+        response = requests.post(neisUrl + '/scs_ica_cr91_005.ws', data=json.dumps(searchParams), cookies=cookies)
         jsonObj = json.loads(response.content)
         hakwonlist = jsonObj["resultSVO"]["hesIcaCr91M00DVO"]
 
-        seq = (pageIndex) * int(params["pageSize"]) + 1
+        seq = (pageIndex) * int(searchParams["pageSize"]) + 1
         teacher_params = {}
 
         for onehakwon in hakwonlist:
@@ -150,12 +115,36 @@ def getSearchZoneCodeList(areaIndex, cookies):
     for zonecode in searchZoneCodeList:
         zoneCodes.append({"zoneCode": zonecode["zoneCode"], "zoneNm": zonecode["zoneNm"]})
 
+def readSearchConfig():
+    with open('./config.json') as json_file:
+        p = json.load(json_file)
+        print(p["pageIndex"])
+        searchParams["pageIndex"] = p["pageIndex"]
+        searchParams["pageSize"] = p["pageSize"]
+        searchParams["checkDomainCode"] = p["checkDomainCode"]
+        searchParams["juOfcdcCode"] = p["juOfcdcCode"]
+        searchParams["acaAsnum"] = p["acaAsnum"]
+        searchParams["gubunCode"] = p["gubunCode"]
+        searchParams["searchYn"] = p["searchYn"]
+        searchParams["searchGubunCode"] = p["searchGubunCode"]
+        searchParams["searchName"] = p["searchName"]
+        searchParams["searchZoneCode"] = p["searchZoneCode"]
+        searchParams["searchKindCode"] = p["searchKindCode"]
+        searchParams["searchTypeCode"] = p["searchTypeCode"]
+        searchParams["searchCrseCode"] = p["searchCrseCode"]
+        searchParams["searchCourseCode"] = p["searchCourseCode"]
+        searchParams["searchClassName"] = p["searchClassName"]
+
 
 if __name__ == "__main__":
     strNow = now.strftime('%y%m%d')
     neisUrl = 'https://www.neis.go.kr'
 
     areaIndex = "0"
+    # 검색 조건 불러오기 추가
+    # config.json 에서 해당 Parameter를 미리 불러옴
+    readSearchConfig()
+
     # 학원정보 데이터 수집 진행중
     # 2020.2.25 방순호
     # for zcode in
