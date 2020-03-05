@@ -116,7 +116,7 @@ def getSearchZoneCodeList(areaIndex, cookies):
         zoneCodes.append({"zoneCode": zonecode["zoneCode"], "zoneNm": zonecode["zoneNm"]})
 
 def readSearchConfig():
-    with open('./config.json') as json_file:
+    with open('./config.json', 'rt', encoding='UTF-8') as json_file:
         p = json.load(json_file)
         print(p["pageIndex"])
         searchParams["pageIndex"] = p["pageIndex"]
