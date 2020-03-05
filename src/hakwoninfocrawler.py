@@ -118,7 +118,6 @@ def getSearchZoneCodeList(areaIndex, cookies):
 def readSearchConfig():
     with open('./config.json', 'rt', encoding='UTF-8') as json_file:
         p = json.load(json_file)
-        print(p["pageIndex"])
         searchParams["pageIndex"] = p["pageIndex"]
         searchParams["pageSize"] = p["pageSize"]
         searchParams["checkDomainCode"] = p["checkDomainCode"]
