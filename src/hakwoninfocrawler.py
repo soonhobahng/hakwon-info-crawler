@@ -113,9 +113,13 @@ def getSearchZoneCodeList(areaIndex, cookies):
     response = requests.post(areaUrls[areaIndex]["url"] + '/scs_ica_cr91_001.ws', data=json.dumps(params), cookies=cookies)
     jsonObj = json.loads(response.content)
 
-    searchZoneCodeList = jsonObj["resultSVO"]["searchZoneCodeList"]
-    for zonecode in searchZoneCodeList:
-        zoneCodes.append({"zoneCode": zonecode["zoneCode"], "zoneNm": zonecode["zoneNm"]})
+    if jsonObj["result"]["status"] == "success":
+        searchZoneCodeList = jsonObj["resultSVO"]["searchZoneCodeList"]
+        for zonecode in searchZoneCodeList:
+            zoneCodes.append({"zoneCode": zonecode["zoneCode"], "zoneNm": zonecode["zoneNm"]})
+        return 1
+    else:
+        return 0
 
 def readSearchConfig():
     with open('./config.json', 'rt', encoding='UTF-8') as json_file:
@@ -161,13 +165,15 @@ if __name__ == "__main__":
         ## cookie 정보 저장
         # request = Request(neisUrl)
         params = {}
-        params["paramJson"] = "%7B%7D"
-        response = requests.get(areaUrls[int(areaIndex)]["url"] + '/edusys.jsp?page=scs_m80000', urlencode(params).encode())
+        # params["paramJson"] = "%7B%7D"
+        response = requests.get(areaUrls[int(areaIndex)]["url"] + '/edusys.jsp?page=scs_m80000', params={})
         cookies = response.cookies
 
         ## 지역 리스트 불러오기
         zoneCodes = []
-        getSearchZoneCodeList(int(areaIndex), cookies)
+        if getSearchZoneCodeList(int(areaIndex), cookies) == 0:
+            print("지역을 불러오는 도중 오류가 발생했습니다.")
+            continue
 
         for zoneCode in zoneCodes:
             print(zoneCode["zoneCode"] + " : " + zoneCode["zoneNm"])
@@ -175,6 +181,6 @@ if __name__ == "__main__":
         zoneIndex = input("원하시는 지역 번호를 입력해 주세요 : ")
 
         searchWord = input("원하시는 검색어를 입력해 주세요 (없으면 걍 엔터) : ")
-        searchParams["searchClassName"] = searchWord
+        searchParams["searchClassName"] = searchWord.strip()
 
         hakwondata(zoneIndex, areaUrls[int(areaIndex)]["url"], areaUrls[int(areaIndex)]["areaNm"], cookies)
