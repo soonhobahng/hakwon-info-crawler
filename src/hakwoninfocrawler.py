@@ -72,13 +72,13 @@ def hakwondata(zcode, neisUrl, areaNm, cookies):
 
         for onehakwon in hakwonlist:
             lessonPeriod = onehakwon["leMms"] + '개월 ' + onehakwon["lePrdDds"] + '일'
-            excelData = (strNow, seq, onehakwon["zoneNm"], onehakwon["acaNm"], onehakwon["leSbjtNm"], onehakwon["faTelno"], onehakwon["totalJuso"], onehakwon["toforNmprFgr"], lessonPeriod,
+            excelData = (strNow, seq, onehakwon["zoneNm"], onehakwon["acaNm"], onehakwon["gmNm"], onehakwon["leSbjtNm"], onehakwon["faTelno"], onehakwon["totalJuso"], onehakwon["toforNmprFgr"], lessonPeriod,
                          onehakwon["totLeTmMmFgr"], onehakwon["thccSmtot"], onehakwon["thccAmt"], onehakwon["etcExpsSmtot"])
 
             ## 강사 정보 추출
             teacher_params["juOfcdcCode"] = onehakwon["juOfcdcCode"]
             teacher_params["acaAsnum"] = onehakwon["acaAsnum"]
-            teacher_params["gubunCode"] = "1"
+            teacher_params["gubunCode"] = searchParams["searchGubunCode"]
 
             teacherList = []
             response = requests.post(neisUrl + '/hes_ica_cr91_006.ws', data=json.dumps(teacher_params), cookies=cookies)
@@ -94,14 +94,21 @@ def hakwondata(zcode, neisUrl, areaNm, cookies):
 
     ## 엑셀 저장
     sheet = book.active
-    sheet.append(('크롤링일', '순번', '지역', '학원명', '교습 과목', '전화번호', '주소', '정원', '교습기간', '총교습시간(분)', '교습비 합계', '교습비', '기타경비', '강사'))
+    sheet.append(('크롤링일', '순번', '지역', '학원명', '교습과정', '교습과목', '전화번호', '주소', '정원', '교습기간', '총교습시간(분)', '교습비 합계', '교습비', '기타경비', '강사'))
     for row in excelList:
         sheet.append(row)
 
+    filename = './data/hakwoncrawling' + '-' + areaNm + '-' + zoneNm
+
     if searchParams["searchClassName"] != '':
-        book.save('./data/hakwoncrawling' + '-' + areaNm + '-' + zoneNm + '-' + searchParams["searchClassName"] + '-' + strNow + '.xlsx')
-    else:
-        book.save('./data/hakwoncrawling' + '-' + areaNm + '-' + zoneNm + '-' + strNow + '.xlsx')
+        filename = filename + '-' + searchParams["searchClassName"]
+
+    if searchParams["searchGubunCode"] == '1':
+        filename = filename + '-' + '학원'
+    elif searchParams["searchGubunCode"] == '2':
+        filename = filename + '-' + '교습소'
+
+    book.save(filename + '-' + strNow + '.xlsx')
 
 ## 지역명 찾기
 def findZoneName(zonecode):
@@ -189,6 +196,18 @@ if __name__ == "__main__":
 
             if zoneIndex.strip() != "":
                 break
+
+        searchGubun = ""
+        while searchGubun == "":
+            searchGubun = input("1 - 학원, 2 - 교습소 (종료 'q') : ")
+            if searchGubun == 'q':
+                exit(0)
+
+            if searchGubun == '1' or searchGubun == '2':
+                searchParams["searchGubunCode"] = searchGubun
+                break
+            else:
+                searchGubun = ""
 
         searchWord = input("원하시는 검색어를 입력해 주세요 (없으면 걍 엔터) : ")
         searchParams["searchClassName"] = searchWord.strip()
