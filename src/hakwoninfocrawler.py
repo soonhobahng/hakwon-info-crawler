@@ -175,10 +175,17 @@ if __name__ == "__main__":
             print("지역을 불러오는 도중 오류가 발생했습니다.")
             continue
 
-        for zoneCode in zoneCodes:
-            print(zoneCode["zoneCode"] + " : " + zoneCode["zoneNm"])
+        zoneIndex = ""
+        while zoneIndex == "":
+            for zoneCode in zoneCodes:
+                print(zoneCode["zoneCode"] + " : " + zoneCode["zoneNm"])
 
-        zoneIndex = input("원하시는 지역 번호를 입력해 주세요 : ")
+            zoneIndex = input("원하시는 지역 번호를 입력해 주세요 (종료 'q') : ")
+            if zoneIndex == 'q':
+                exit(0)
+
+            if zoneIndex.strip() != "":
+                break
 
         searchWord = input("원하시는 검색어를 입력해 주세요 (없으면 걍 엔터) : ")
         searchParams["searchClassName"] = searchWord.strip()
