@@ -71,7 +71,9 @@ def hakwondata(zcode, neisUrl, areaNm, cookies):
         teacher_params = {}
 
         for onehakwon in hakwonlist:
-            excelData = (strNow, seq, onehakwon["zoneNm"], onehakwon["acaNm"], onehakwon["leSbjtNm"], onehakwon["faTelno"], onehakwon["totalJuso"])
+            lessonPeriod = onehakwon["leMms"] + '개월 ' + onehakwon["lePrdDds"] + '일'
+            excelData = (strNow, seq, onehakwon["zoneNm"], onehakwon["acaNm"], onehakwon["leSbjtNm"], onehakwon["faTelno"], onehakwon["totalJuso"], onehakwon["toforNmprFgr"], lessonPeriod,
+                         onehakwon["totLeTmMmFgr"], onehakwon["thccSmtot"], onehakwon["thccAmt"], onehakwon["etcExpsSmtot"])
 
             ## 강사 정보 추출
             teacher_params["juOfcdcCode"] = onehakwon["juOfcdcCode"]
@@ -92,7 +94,7 @@ def hakwondata(zcode, neisUrl, areaNm, cookies):
 
     ## 엑셀 저장
     sheet = book.active
-    sheet.append(('크롤링일', '순번', '지역', '학원명', '교습 과목', '전화번호', '주소', '강사'))
+    sheet.append(('크롤링일', '순번', '지역', '학원명', '교습 과목', '전화번호', '주소', '정원', '교습기간', '총교습시간(분)', '교습비 합계', '교습비', '기타경비', '강사'))
     for row in excelList:
         sheet.append(row)
 
@@ -171,5 +173,8 @@ if __name__ == "__main__":
             print(zoneCode["zoneCode"] + " : " + zoneCode["zoneNm"])
 
         zoneIndex = input("원하시는 지역 번호를 입력해 주세요 : ")
+
+        searchWord = input("원하시는 검색어를 입력해 주세요 (없으면 걍 엔터) : ")
+        searchParams["searchClassName"] = searchWord
 
         hakwondata(zoneIndex, areaUrls[int(areaIndex)]["url"], areaUrls[int(areaIndex)]["areaNm"], cookies)
