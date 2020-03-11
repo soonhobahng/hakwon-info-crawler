@@ -98,7 +98,10 @@ def hakwondata(zcode, neisUrl, areaNm, cookies):
     for row in excelList:
         sheet.append(row)
 
-    book.save('./data/hakwoncrawling' + '-' + areaNm + '-' + zoneNm + '-' + strNow + '.xlsx')
+    if searchParams["searchClassName"] != '':
+        book.save('./data/hakwoncrawling' + '-' + areaNm + '-' + zoneNm + '-' + searchParams["searchClassName"] + '-' + strNow + '.xlsx')
+    else:
+        book.save('./data/hakwoncrawling' + '-' + areaNm + '-' + zoneNm + '-' + strNow + '.xlsx')
 
 ## 지역명 찾기
 def findZoneName(zonecode):
