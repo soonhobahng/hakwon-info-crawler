@@ -28,6 +28,28 @@ areaUrls = [
 zoneCodes = []
 searchParams = {}
 
+# Print iterations progress
+def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
+    """
+    Call in a loop to create terminal progress bar
+    @params:
+        iteration   - Required  : current iteration (Int)
+        total       - Required  : total iterations (Int)
+        prefix      - Optional  : prefix string (Str)
+        suffix      - Optional  : suffix string (Str)
+        decimals    - Optional  : positive number of decimals in percent complete (Int)
+        length      - Optional  : character length of bar (Int)
+        fill        - Optional  : bar fill character (Str)
+        printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
+    """
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filledLength = int(length * iteration // total)
+    bar = fill * filledLength + '-' * (length - filledLength)
+    print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end = printEnd)
+    # Print New Line on Complete
+    if iteration == total:
+        print()
+
 def hakwondata(zcode, neisUrl, areaNm, cookies):
     book = Workbook()
     urllist = []
@@ -51,6 +73,9 @@ def hakwondata(zcode, neisUrl, areaNm, cookies):
         if therest > 0:
             totalPage = totalPage + 1
         searchParams["pageSize"] = 1000
+    elif totalCnt < 1:
+        print("No records found")
+        return
     else:
         totalPage = 1
         searchParams["pageSize"] = str(totalCnt)
@@ -70,27 +95,39 @@ def hakwondata(zcode, neisUrl, areaNm, cookies):
         seq = (pageIndex) * int(searchParams["pageSize"]) + 1
         teacher_params = {}
 
+        curAcaAsnum = ""
+
+        progressIndex = 0
+        maxProgressIndex = len(hakwonlist)
+        printProgressBar(progressIndex, maxProgressIndex, prefix='Progress:', suffix='Complete', length=50)
         for onehakwon in hakwonlist:
             lessonPeriod = onehakwon["leMms"] + '개월 ' + onehakwon["lePrdDds"] + '일'
             excelData = (strNow, seq, onehakwon["zoneNm"], onehakwon["acaNm"], onehakwon["gmNm"], onehakwon["leSbjtNm"], onehakwon["faTelno"], onehakwon["totalJuso"], onehakwon["toforNmprFgr"], lessonPeriod,
                          onehakwon["totLeTmMmFgr"], onehakwon["thccSmtot"], onehakwon["thccAmt"], onehakwon["etcExpsSmtot"])
 
-            ## 강사 정보 추출
-            teacher_params["juOfcdcCode"] = onehakwon["juOfcdcCode"]
-            teacher_params["acaAsnum"] = onehakwon["acaAsnum"]
-            teacher_params["gubunCode"] = searchParams["searchGubunCode"]
+            if curAcaAsnum != onehakwon["acaAsnum"]:
+                curAcaAsnum = onehakwon["acaAsnum"]
+                ## 강사 정보 추출
+                teacher_params["juOfcdcCode"] = onehakwon["juOfcdcCode"]
+                teacher_params["acaAsnum"] = onehakwon["acaAsnum"]
+                teacher_params["gubunCode"] = searchParams["searchGubunCode"]
 
-            teacherList = []
-            response = requests.post(neisUrl + '/hes_ica_cr91_006.ws', data=json.dumps(teacher_params), cookies=cookies)
-            jsonObj = json.loads(response.content)
-            teachers = jsonObj["resultSVO"]["teacherDVOList"]
+                teacherList = []
+                response = requests.post(neisUrl + '/hes_ica_cr91_006.ws', data=json.dumps(teacher_params), cookies=cookies)
+                jsonObj = json.loads(response.content)
+                teachers = jsonObj["resultSVO"]["teacherDVOList"]
 
-            for oneteacher in teachers:
-                teacherList.append(oneteacher["fouKraName"])
+                for oneteacher in teachers:
+                    teacherList.append(oneteacher["fouKraName"])
 
             teacherTuple = tuple(teacherList)
             excelList.append(excelData + teacherTuple)
             seq = seq + 1
+            progressIndex = progressIndex + 1
+            printProgressBar(progressIndex, maxProgressIndex, prefix='Progress:', suffix='Complete', length=50)
+
+        ## progress bar end
+        # print("\n")
 
     ## 엑셀 저장
     sheet = book.active
