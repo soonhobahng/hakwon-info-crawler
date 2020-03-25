@@ -20,7 +20,7 @@ areaUrls = [
     {'url': 'https://hakwon.cne.go.kr', 'areaNm': '충남'},
     {'url': 'https://hakwon.jbe.go.kr', 'areaNm': '전북'},
     {'url': 'https://hakwon.jne.go.kr', 'areaNm': '전남'},
-    {'url': 'https://hakwon.gbe.go.kr', 'areaNm': '경북'},
+    {'url': 'https://hakwon.gbe.kr', 'areaNm': '경북'},
     {'url': 'https://hakwon.gne.go.kr', 'areaNm': '경남'},
     {'url': 'https://hakwon.jje.go.kr', 'areaNm': '제주'},
 ]
@@ -100,9 +100,16 @@ def hakwondata(zcode, neisUrl, areaNm, cookies):
         progressIndex = 0
         maxProgressIndex = len(hakwonlist)
         printProgressBar(progressIndex, maxProgressIndex, prefix='Progress:', suffix='Complete', length=50)
+
         for onehakwon in hakwonlist:
+            leSbjtNm = ""
+            if isinstance(onehakwon["leSbjtNm"], list):
+                leSbjtNm = onehakwon["leSbjtNm"][0]
+            else:
+                leSbjtNm = onehakwon["leSbjtNm"]
+
             lessonPeriod = onehakwon["leMms"] + '개월 ' + onehakwon["lePrdDds"] + '일'
-            excelData = (strNow, seq, onehakwon["zoneNm"], onehakwon["acaNm"], onehakwon["gmNm"], onehakwon["leSbjtNm"], onehakwon["faTelno"], onehakwon["totalJuso"], onehakwon["toforNmprFgr"], lessonPeriod,
+            excelData = (strNow, seq, onehakwon["zoneNm"], onehakwon["acaNm"], onehakwon["gmNm"], leSbjtNm, onehakwon["faTelno"], onehakwon["totalJuso"], onehakwon["toforNmprFgr"], lessonPeriod,
                          onehakwon["totLeTmMmFgr"], onehakwon["thccSmtot"], onehakwon["thccAmt"], onehakwon["etcExpsSmtot"])
 
             if curAcaAsnum != onehakwon["acaAsnum"]:
@@ -201,6 +208,10 @@ if __name__ == "__main__":
     # 2020.2.25 방순호
     # for zcode in
     while int(areaIndex) >= 0:
+        ## Initialize
+        searchParams["pageIndex"] = "1"
+        searchParams["pageSize"] = "1"
+
         for aindex in range(0,len(areaUrls),1):
             print(str(aindex) + " : " + areaUrls[aindex]["areaNm"])
 
